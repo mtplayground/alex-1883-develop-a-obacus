@@ -31,7 +31,10 @@ function App() {
             </div>
           </div>
 
-          <div className="mt-8 space-y-6" aria-label="Abacus visual theme preview">
+          <div
+            className="mt-8 space-y-6"
+            aria-label="Abacus visual theme preview"
+          >
             {[
               ['bg-abacus-red', 'w-20'],
               ['bg-abacus-gold', 'w-28'],
