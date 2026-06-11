@@ -17,6 +17,7 @@ interface WireProps {
 interface BeadProps {
   readonly bead: BeadState;
   readonly isDragging: boolean;
+  readonly wireLabel: string;
   readonly onPointerDown: (
     event: PointerEvent<HTMLButtonElement>,
     bead: BeadState,
@@ -65,6 +66,7 @@ const shouldMoveFromDrag = (event: PointerEvent, drag: DragState) => {
 const Bead = ({
   bead,
   isDragging,
+  wireLabel,
   onPointerDown,
   onPointerUp,
   onPointerCancel,
@@ -73,7 +75,7 @@ const Bead = ({
   <button
     type="button"
     className={[
-      'block size-5 touch-none rounded-full shadow-sm ring-1 ring-white/80 transition duration-150',
+      'block size-5 shrink-0 touch-none rounded-full shadow-sm ring-1 ring-white/80 transition duration-150',
       'cursor-grab active:cursor-grabbing',
       'sm:size-6 md:size-7 lg:size-8',
       bead.side === 'active'
@@ -88,7 +90,14 @@ const Bead = ({
     onPointerCancel={onPointerCancel}
     onLostPointerCapture={onPointerCancel}
     onKeyDown={(event) => onKeyDown(event, bead)}
+    aria-keyshortcuts={
+      bead.side === 'parked'
+        ? 'Enter Space ArrowRight'
+        : 'Enter Space ArrowLeft'
+    }
     aria-label={`Bead ${bead.index + 1} ${bead.side}`}
+    aria-pressed={bead.side === 'active'}
+    title={`${wireLabel} bead ${bead.index + 1}`}
   />
 );
 
@@ -97,6 +106,7 @@ const Wire = ({ wire, onMoveBead }: WireProps) => {
   const [draggingBeadId, setDraggingBeadId] = useState<BeadId | null>(null);
   const parkedBeads = wire.beads.filter((bead) => bead.side === 'parked');
   const activeBeads = wire.beads.filter((bead) => bead.side === 'active');
+  const label = boardLabel(wire);
 
   const clearDrag = () => {
     dragRef.current = null;
@@ -145,7 +155,13 @@ const Wire = ({ wire, onMoveBead }: WireProps) => {
     event: React.KeyboardEvent<HTMLButtonElement>,
     bead: BeadState,
   ) => {
-    if (event.key !== 'Enter' && event.key !== ' ') {
+    const shouldMove =
+      event.key === 'Enter' ||
+      event.key === ' ' ||
+      (event.key === 'ArrowRight' && bead.side === 'parked') ||
+      (event.key === 'ArrowLeft' && bead.side === 'active');
+
+    if (!shouldMove) {
       return;
     }
 
@@ -156,23 +172,24 @@ const Wire = ({ wire, onMoveBead }: WireProps) => {
   return (
     <div
       role="group"
-      className="grid grid-cols-[4.5rem_1fr] items-center gap-3 sm:grid-cols-[5.25rem_1fr] sm:gap-4"
-      aria-label={boardLabel(wire)}
+      className="grid min-w-0 grid-cols-1 gap-1 sm:grid-cols-[5.25rem_minmax(0,1fr)] sm:items-center sm:gap-4"
+      aria-label={label}
       data-testid={wire.id}
     >
-      <div className="text-right text-xs font-bold uppercase tracking-[0.12em] text-abacus-muted">
+      <div className="text-left text-xs font-bold uppercase tracking-[0.12em] text-abacus-muted sm:text-right">
         {wire.kind === 'quarter' ? '1/4' : `10^${wire.index}`}
       </div>
 
-      <div className="relative min-h-10 sm:min-h-12">
+      <div className="relative min-h-10 min-w-0 sm:min-h-12">
         <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-abacus-rail shadow-inner shadow-abacus-ink/20" />
-        <div className="relative z-10 flex min-h-10 items-center justify-between gap-3 sm:min-h-12">
+        <div className="relative z-10 flex min-h-10 min-w-0 items-center justify-between gap-2 sm:min-h-12 sm:gap-3">
           <div className="flex min-w-0 items-center gap-0.5 sm:gap-1">
             {parkedBeads.map((bead) => (
               <Bead
                 key={bead.id}
                 bead={bead}
                 isDragging={draggingBeadId === bead.id}
+                wireLabel={label}
                 onPointerDown={handlePointerDown}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={clearDrag}
@@ -187,6 +204,7 @@ const Wire = ({ wire, onMoveBead }: WireProps) => {
                 key={bead.id}
                 bead={bead}
                 isDragging={draggingBeadId === bead.id}
+                wireLabel={label}
                 onPointerDown={handlePointerDown}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={clearDrag}
@@ -202,11 +220,17 @@ const Wire = ({ wire, onMoveBead }: WireProps) => {
 
 export const SchotyBoard = ({ board, onMoveBead }: SchotyBoardProps) => (
   <section
-    className="w-full rounded-lg border-[10px] border-abacus-wood bg-[linear-gradient(90deg,rgba(251,247,239,0.94),rgba(238,245,244,0.9))] p-3 shadow-2xl shadow-abacus-rail/15 sm:border-[14px] sm:p-5"
+    className="w-full min-w-0 rounded-lg border-[6px] border-abacus-wood bg-[linear-gradient(90deg,rgba(251,247,239,0.94),rgba(238,245,244,0.9))] p-2 shadow-2xl shadow-abacus-rail/15 sm:border-[14px] sm:p-5"
     aria-label={`Schoty board with ${board.wires.length} wires`}
+    aria-describedby="schoty-board-help"
   >
-    <div className="rounded-sm border border-abacus-wood/30 bg-white/55 px-2 py-4 sm:px-4 sm:py-5">
-      <div className="space-y-3 sm:space-y-4">
+    <p id="schoty-board-help" className="sr-only">
+      Each bead is a button. Press Enter or Space to move a bead. Press
+      ArrowRight on a parked bead or ArrowLeft on an active bead to move in the
+      expected direction.
+    </p>
+    <div className="min-w-0 rounded-sm border border-abacus-wood/30 bg-white/55 px-2 py-3 sm:px-4 sm:py-5">
+      <div className="space-y-2.5 sm:space-y-4">
         {board.wires.map((wire) => (
           <Wire key={wire.id} wire={wire} onMoveBead={onMoveBead} />
         ))}
