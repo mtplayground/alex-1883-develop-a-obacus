@@ -12,3 +12,5 @@ dist/
 .pipeline-state.json
 .gitkeep
 .progress
+playwright-report/
+test-results/

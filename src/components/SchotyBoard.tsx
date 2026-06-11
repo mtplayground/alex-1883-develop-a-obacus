@@ -155,8 +155,10 @@ const Wire = ({ wire, onMoveBead }: WireProps) => {
 
   return (
     <div
+      role="group"
       className="grid grid-cols-[4.5rem_1fr] items-center gap-3 sm:grid-cols-[5.25rem_1fr] sm:gap-4"
       aria-label={boardLabel(wire)}
+      data-testid={wire.id}
     >
       <div className="text-right text-xs font-bold uppercase tracking-[0.12em] text-abacus-muted">
         {wire.kind === 'quarter' ? '1/4' : `10^${wire.index}`}
