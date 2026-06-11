@@ -56,10 +56,14 @@ function App() {
                 className="mt-2 block min-h-12 text-5xl font-black leading-none text-abacus-rail"
                 aria-live="polite"
                 aria-label={`Current schoty value ${formattedValue}`}
+                data-testid="current-value"
               >
                 {formattedValue}
               </output>
-              <p className="mt-2 text-sm font-semibold text-abacus-muted">
+              <p
+                className="mt-2 text-sm font-semibold text-abacus-muted"
+                data-testid="active-bead-count"
+              >
                 {activeBeadCount} active beads
               </p>
             </div>
