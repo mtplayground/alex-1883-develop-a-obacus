@@ -46,3 +46,30 @@ test('dragging beads updates the live value and reset restores zero', async ({
   await expect(currentValue).toHaveText('0');
   await expect(activeBeadCount).toHaveText('0 active beads');
 });
+
+test('mobile layout fits the viewport and beads work from the keyboard', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/');
+
+  const currentValue = page.getByTestId('current-value');
+  const onesWire = page.getByTestId('wire-0');
+  const hasHorizontalOverflow = await page.evaluate(
+    () =>
+      document.documentElement.scrollWidth >
+      document.documentElement.clientWidth,
+  );
+
+  expect(hasHorizontalOverflow).toBe(false);
+
+  const beadEight = onesWire.getByRole('button', { name: 'Bead 8 parked' });
+  await beadEight.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(currentValue).toHaveText('3');
+
+  const beadNine = onesWire.getByRole('button', { name: 'Bead 9 active' });
+  await beadNine.focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(currentValue).toHaveText('1');
+});
