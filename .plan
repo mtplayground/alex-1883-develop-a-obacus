@@ -1,0 +1,48 @@
+# Architecture Plan
+
+## Product Scope
+
+Build a browser-based schoty abacus using Vite, React, and TypeScript. The app renders a frame with horizontal wires and draggable beads, computes the represented value from bead positions, supports reset and accessibility interactions, and can be built for static self-hosting.
+
+`PRODUCT.md` is not present in the workspace at setup time, so product terminology is taken from the issue set: schoty, abacus, board, wires, and beads.
+
+## Module Structure
+
+- `src/main.tsx`: React entry point and app bootstrap.
+- `src/App.tsx`: Top-level page layout, app state wiring, value display, reset action.
+- `src/config/schoty.ts`: Board configuration, including wire count, `beadsPerWire = 10`, optional quarter wire with 4 beads, and environment-derived defaults.
+- `src/domain/types.ts`: Shared TypeScript types for `BoardState`, `WireState`, `Bead`, `WireConfig`, bead side/slot concepts, and action inputs.
+- `src/domain/createBoard.ts`: Initial state factory from config.
+- `src/domain/moveBeads.ts`: Pure bead-move engine implementing schoty movement rules.
+- `src/domain/computeValue.ts`: Pure value engine that derives the displayed number from active bead counts across wires.
+- `src/components/Board.tsx`: Board frame and wire composition.
+- `src/components/Wire.tsx`: Wire rendering, bead positions, per-wire interaction hooks.
+- `src/components/Bead.tsx`: Bead visual and semantic control surface.
+- `src/components/ValueDisplay.tsx`: Live numeric readout.
+- `src/components/ResetButton.tsx`: Reset control.
+- `src/styles/index.css`: Tailwind imports and base styling.
+- `src/test/`: Unit test helpers and representative fixtures.
+- `tests/e2e/`: Playwright interaction tests.
+
+## Issue Dependencies
+
+1. Issue #1 creates the Vite + React + TypeScript skeleton and scripts.
+2. Issues #2 and #3 build on #1 by adding Tailwind, base styling, linting, formatting, and `.env.example`.
+3. Issue #4 defines the shared state model and configuration; all domain and UI work should depend on these exported types instead of local duplicates.
+4. Issues #5 and #6 implement pure domain logic for movement and value computation.
+5. Issue #7 tests the domain logic from #5 and #6 with Vitest.
+6. Issue #8 renders the static board using the config and state model.
+7. Issue #9 connects pointer events to the pure movement engine and snaps to valid bead slots.
+8. Issue #10 adds the live value display and reset by composing `computeValue`, state initialization, and UI controls.
+9. Issues #11 and #12 validate the user workflow with Playwright and complete responsive/accessibility behavior.
+10. Issue #13 verifies production build output and documents static hosting in the README.
+
+## Key Design Decisions
+
+- Keep schoty mechanics in pure functions under `src/domain` so movement and value computation can be unit-tested independently from React.
+- Represent each wire by the count or ordered positions of active beads, with rendering deriving exact coordinates from config. Avoid storing pixel positions as source of truth.
+- Treat drag/tap/keyboard interactions as commands that resolve to a target bead and direction, then delegate state changes to `moveBeads`.
+- Centralize board dimensions and bead counts in config so rendering, tests, and value computation share the same assumptions.
+- Use React state at the app boundary for the board, while keeping domain functions immutable and deterministic.
+- Add accessibility semantics at the bead or wire control level so keyboard and assistive technology support is not bolted on after pointer dragging.
+- Keep deployment as static Vite output unless later issues introduce a server requirement.
