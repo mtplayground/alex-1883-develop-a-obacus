@@ -1,18 +1,22 @@
+import { useState } from 'react';
+
 import { initialBoardState } from './config/schoty';
 import { SchotyBoard } from './components/SchotyBoard';
-import { setWireActiveCount } from './domain/moveBeads';
-
-const boardPreviewState = {
-  ...initialBoardState,
-  wires: initialBoardState.wires.map((wire) =>
-    setWireActiveCount(
-      wire,
-      Math.min(wire.beads.length - 1, wire.kind === 'quarter' ? 1 : 3),
-    ),
-  ),
-};
+import { moveBeads, type BeadMoveTarget } from './domain/moveBeads';
+import type { WireId } from './domain/types';
 
 function App() {
+  const [board, setBoard] = useState(initialBoardState);
+
+  const handleMoveBead = (wireId: WireId, target: BeadMoveTarget) => {
+    setBoard((currentBoard) => ({
+      ...currentBoard,
+      wires: currentBoard.wires.map((wire) =>
+        wire.id === wireId ? moveBeads(wire, target) : wire,
+      ),
+    }));
+  };
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(215,169,68,0.18),transparent_32rem),linear-gradient(135deg,#fbf7ef_0%,#eef5f4_52%,#f8eee6_100%)] text-abacus-ink">
       <section className="mx-auto grid min-h-screen w-full max-w-7xl items-center gap-8 px-4 py-8 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:px-12">
@@ -24,12 +28,12 @@ function App() {
             A working board surface for bead movement.
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-abacus-muted">
-            The frame now renders horizontal wires with parked beads on the left
-            and active beads on the right, ready for pointer interaction.
+            The frame renders horizontal wires with parked beads on the left and
+            active beads snapping to the right.
           </p>
         </div>
 
-        <SchotyBoard board={boardPreviewState} />
+        <SchotyBoard board={board} onMoveBead={handleMoveBead} />
       </section>
     </main>
   );
